@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>For Sitara ❤️ - A Special 3D Surprise</title>
+
+  <!-- Romantic & Clean Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js r128 CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #160711;
+      font-family: 'Poppins', sans-serif;
+      color: #fff;
+      touch-action: none;
+    }
+
+    #game-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      cursor: grab;
+    }
+
+    #game-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* Glassmorphism Romantic Panels */
+    .glass-panel {
+      background: rgba(36, 10, 26, 0.74);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 182, 206, 0.3);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    /* ================= START SCREEN OVERLAY ================= */
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at 50% 35%, rgba(92, 22, 60, 0.9), rgba(16, 4, 12, 0.96));
+      transition: opacity 0.65s ease, visibility 0.65s ease;
+      cursor: pointer;
+    }
+
+    #start-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .start-card {
+      max-width: 450px;
+      width: 100%;
+      border-radius: 28px;
+      padding: 34px 26px;
+      text-align: center;
+      animation: floatCard 4s ease-in-out infinite;
+    }
+
+    @keyframes floatCard {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .start-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255, 105, 155, 0.2);
+      border: 1px solid rgba(255, 150, 190, 0.38);
+      color: #ffc2d6;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .start-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.9rem, 6.2vw, 2.55rem);
+      line-height: 1.2;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff5f8 0%, #ffb3cc 50%, #ffd996 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .start-subtitle {
+      font-size: 0.94rem;
+      color: rgba(255, 228, 238, 0.88);
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    .controls-hint-box {
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 18px;
+      padding: 12px 14px;
+      margin-bottom: 24px;
+      font-size: 0.81rem;
+      color: #ffd8e7;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .btn-primary-romantic {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px 26px;
+      border-radius: 999px;
+      border: none;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.04rem;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff477e 0%, #ff7096 55%, #ffb36b 100%);
+      box-shadow: 0 10px 28px rgba(255, 71, 126, 0.48), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-primary-romantic:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 14px 34px rgba(255, 71, 126, 0.62);
+    }
+
+    .btn-primary-romantic:active {
+      transform: scale(0.97);
+    }
+
+    /* ================= TOP HUD ================= */
+    #hud-top {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 20;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .hud-left, .hud-right {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .hud-pill {
+      padding: 8px 13px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #ffe8f0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hud-btn {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: transform 0.16s ease, background 0.2s ease;
+    }
+
+    .hud-btn:hover {
+      background: rgba(255, 105, 155, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .hud-btn:active {
+      transform: scale(0.95);
+    }
+
+    .hud-btn-accent {
+      background: linear-gradient(135deg, rgba(255, 75, 134, 0.88), rgba(255, 148, 114, 0.88));
+      border: 1px solid rgba(255, 224, 236, 0.45);
+    }
+
+    /* ================= TOAST MESSAGE ================= */
+    #toast-msg {
+      position: fixed;
+      top: 66px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-14px);
+      z-index: 35;
+      padding: 9px 18px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #fff;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      white-space: nowrap;
+      max-width: 92vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #toast-msg.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ================= VIRTUAL THUMB JOYSTICK ================= */
+    #joystick-zone {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      width: 122px;
+      height: 122px;
+      z-index: 25;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 140, 180, 0.16) 0%, rgba(45, 14, 33, 0.58) 100%);
+      border: 2px solid rgba(255, 182, 206, 0.38);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      transition: opacity 0.35s ease;
+    }
+
+    #joystick-zone.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #joystick-knob {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff5e94, #ffb284);
+      border: 2px solid rgba(255, 255, 255, 0.78);
+      box-shadow: 0 4px 14px rgba(255, 80, 140, 0.55);
+      transform: translate(0px, 0px);
+      pointer-events: none;
+    }
+
+    #nav-hint-pill {
+      position: fixed;
+      bottom: 26px;
+      right: 18px;
+      z-index: 20;
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      color: #ffd8e8;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+
+    /* ================= PROPOSAL PROMPT (YES / NO) ================= */
+    #proposal-ui {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      z-index: 30;
+      width: min(92vw, 430px);
+      border-radius: 26px;
+      padding: 18px 20px;
+      text-align: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.45s ease, transform 0.45s ease, visibility 0.45s ease;
+    }
+
+    #proposal-ui.visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .proposal-question {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.32rem, 4.8vw, 1.68rem);
+      font-weight: 700;
+      color: #fff5f8;
+      margin-bottom: 5px;
+      text-shadow: 0 2px 12px rgba(255, 90, 145, 0.55);
+    }
+
+    .proposal-sub {
+      font-size: 0.84rem;
+      color: #ffcade;
+      margin-bottom: 14px;
+      min-height: 20px;
+    }
+
+    .proposal-btn-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      min-height: 52px;
+    }
+
+    #btn-yes {
+      padding: 13px 30px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.65);
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.06rem;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff3377 0%, #ff6b9d 50%, #ffaa64 100%);
+      box-shadow: 0 8px 26px rgba(255, 51, 119, 0.55);
+      animation: heartbeat 1.5s ease-in-out infinite;
+      transition: transform 0.2s ease;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      15% { transform: scale(1.07); }
+      30% { transform: scale(1); }
+      45% { transform: scale(1.05); }
+    }
+
+    #btn-no {
+      padding: 12px 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 195, 215, 0.42);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: #ffe2ed;
+      cursor: pointer;
+      background: rgba(65, 22, 46, 0.82);
+      backdrop-filter: blur(10px);
+      transition: left 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.2s ease;
+      z-index: 40;
+    }
+
+    /* ================= CEREMONY STATUS CAPTION ================= */
+    #ceremony-caption {
+      position: fixed;
+      top: 66px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 32;
+      padding: 9px 20px;
+      border-radius: 999px;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: #fff4f8;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #ceremony-caption.visible {
+      opacity: 1;
+    }
+
+    /* ================= CELEBRATION CARD ================= */
+    #celebration-card {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      z-index: 45;
+      width: min(92vw, 450px);
+      border-radius: 28px;
+      padding: 22px 24px;
+      text-align: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.6s ease, transform 0.6s ease, visibility 0.6s ease;
+    }
+
+    #celebration-card.visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .celebrate-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.5rem, 5.4vw, 2.0rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff 0%, #ffb8d2 50%, #ffe08a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .celebrate-sub {
+      font-size: 0.9rem;
+      color: #ffdbe8;
+      margin-bottom: 16px;
+    }
+
+    .celebrate-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary-glass {
+      padding: 11px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 195, 218, 0.42);
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .btn-secondary-glass:hover {
+      background: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
+    }
+
+    @media (min-width: 900px) {
+      #joystick-zone {
+        opacity: 0.65;
+      }
+      #joystick-zone:hover {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3D WebGL Canvas -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- Optional Gallery Picker Input -->
+  <input type="file" id="photo-file-input" accept="image/*" style="display:none;" />
+
+  <!-- ================= START SCREEN OVERLAY ================= -->
+  <div id="start-screen">
+    <div class="start-card glass-panel">
+      <div class="start-badge">✨ A Romantic 3D Surprise ✨</div>
+      <h1 class="start-title">For Sitara ❤️ - Tap to Enter</h1>
+      <p class="start-subtitle">
+        Step inside a dreamy world made just for you. Admire your portrait in Room 1, then follow the hearts through the archway into Room 2...
+      </p>
+      <div class="controls-hint-box">
+        <div>📱 <strong>Mobile:</strong> Left thumb joystick to walk • Drag screen to look</div>
+        <div>💻 <strong>Desktop:</strong> WASD / Arrow keys to walk • Mouse drag to look</div>
+      </div>
+      <button id="btn-start" class="btn-primary-romantic">
+        <span>Tap to Enter</span>
+        <span>❤️</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= TOP HUD ================= -->
+  <div id="hud-top">
+    <div class="hud-left">
+      <div id="room-indicator" class="hud-pill glass-panel">
+        <span>💖</span>
+        <span id="room-name-text">Room 1: Love Gallery</span>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <button id="btn-add-photo" class="hud-btn hud-btn-accent" title="Choose Photo from Gallery">
+        <span>📷</span>
+        <span>Photo</span>
+      </button>
+      <button id="btn-rotate-photo" class="hud-btn glass-panel" title="Rotate Photo 90°">
+        <span>🔄</span>
+        <span>Rotate</span>
+      </button>
+      <button id="btn-audio" class="hud-btn glass-panel" title="Toggle Music Chimes">
+        <span id="audio-icon">🔊</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg" class="glass-panel"></div>
+
+  <!-- Ring Ceremony Subtitle Caption -->
+  <div id="ceremony-caption" class="glass-panel">💍 Putting the ring on Sitara's finger...</div>
+
+  <!-- Virtual Thumb Joystick (Bottom-Left) -->
+  <div id="joystick-zone" aria-label="Movement Joystick">
+    <div id="joystick-knob"></div>
+  </div>
+
+  <!-- Subtle Navigation Hint (Bottom-Right) -->
+  <div id="nav-hint-pill" class="glass-panel">
+    Follow hearts to <strong>Room 2 →</strong>
+  </div>
+
+  <!-- ================= PROPOSAL YES / NO OVERLAY ================= -->
+  <div id="proposal-ui" class="glass-panel">
+    <div class="proposal-question">Will U Marry Me, Sitara? 💍</div>
+    <div id="proposal-subtext" class="proposal-sub">He is waiting with all his heart for your answer...</div>
+    <div class="proposal-btn-row" id="proposal-btn-row">
+      <button id="btn-yes">YES ❤️</button>
+      <button id="btn-no">NO 🙈</button>
+    </div>
+  </div>
+
+  <!-- ================= CELEBRATION OVERLAY ================= -->
+  <div id="celebration-card" class="glass-panel">
+    <div class="celebrate-title">Forever Together, Sitara ❤️💍</div>
+    <div class="celebrate-sub">
+      She said YES! The ring shines on your finger forever ✨
+    </div>
+    <div class="celebrate-actions">
+      <button id="btn-replay" class="btn-primary-romantic" style="width:auto; padding: 11px 20px; font-size:0.88rem;">
+        <span>Replay Ring Ceremony</span>
+        <span>💍</span>
+      </button>
+      <button id="btn-explore" class="btn-secondary-glass">
+        Keep Exploring 🌹
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * FOR SITARA ❤️ - GitHub Pages Ready 3D Interactive Romantic Proposal Game
+     * Automatically loads './sitara.jpg' (rotated -90° so her face is upright!)
+     * ============================================================================
+     */
+
+    // -------------------- GLOBAL STATE --------------------
+    let scene, camera, renderer, clock;
+    let gameStarted = false;
+    let currentRoom = 1; // 1 = Love Gallery, 2 = Proposal Room
+
+    // Player movement & camera state
+    const player = {
+      pos: new THREE.Vector3(0, 1.65, 3.85),
+      yaw: 0,      // 0 looks directly toward North Wall (-Z) where Sitara's photo frame hangs
+      pitch: 0.03,
+      speed: 4.1
+    };
+
+    // Input state
+    const keys = { w: false, a: false, s: false, d: false, up: false, down: false, left: false, right: false };
+    const joyInput = { x: 0, y: 0, active: false, touchId: null };
+    const lookInput = { active: false, touchId: null, lastX: 0, lastY: 0 };
+
+    // Offscreen Photo Frame Canvas & Rotation State
+    let photoCanvas, photoCtx, photoTexture;
+    let uploadedImage = null;
+    let photoRotationDeg = 0; // Set to -90 automatically when './sitara.jpg' loads!
+
+    // 3D Animated Characters & Props
+    let boyRig = null;
+    let sitaraHandRig = null;
+    let diamondRing = null;
+    let heartParticles = null;
+    let celebrationParticles = null;
+    let floatingFloorHearts = [];
+    let fairyLightMeshes = [];
+
+    // Proposal & Ring Ceremony State Machine
+    let noDodgeCount = 0;
+    let yesScale = 1.0;
+    let proposalState = 'idle'; // 'idle' | 'prompting' | 'ceremony' | 'celebrating' | 'explored'
+    let ceremonyTimer = 0;
+
+    // Web Audio API Romantic Synthesizer
+    let audioCtx = null;
+    let audioEnabled = true;
+    let ambientInterval = null;
+
+    // -------------------- WEB AUDIO API ROMANTIC SOUND ENGINE --------------------
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioCtx = new AudioContext();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, duration = 0.8, type = 'sine', gainVal = 0.08, delay = 0) {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const now = audioCtx.currentTime + delay;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(gainVal, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.05);
+      } catch (e) {
+        // Safely ignore if audio context is restricted
+      }
+    }
+
+    function startAmbientMusicBox() {
+      if (ambientInterval) clearInterval(ambientInterval);
+      const notes = [523.25, 659.25, 783.99, 987.77, 1046.50, 783.99, 659.25, 587.33];
+      let step = 0;
+      ambientInterval = setInterval(() => {
+        if (!gameStarted || !audioEnabled || proposalState === 'ceremony') return;
+        const freq = notes[step % notes.length];
+        playTone(freq, 1.4, 'sine', 0.032, 0);
+        if (step % 4 === 0) {
+          playTone(freq * 0.5, 1.8, 'triangle', 0.025, 0.05);
+        }
+        step++;
+      }, 1150);
+    }
+
+    function playPlayfulBoing() {
+      playTone(440, 0.14, 'triangle', 0.08, 0);
+      playTone(587.33, 0.22, 'sine', 0.08, 0.07);
+    }
+
+    function playCelebrationFanfare() {
+      const chord = [
+        { f: 523.25, d: 0.00 }, // C5
+        { f: 659.25, d: 0.12 }, // E5
+        { f: 783.99, d: 0.24 }, // G5
+        { f: 987.77, d: 0.36 }, // B5
+ 
